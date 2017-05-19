@@ -33,7 +33,13 @@ def main(input_file=None, window_size="1024"):
     frame = w.getnframes()
     
     # Use an 8-bit integer for single-byte samples, 16-bit integer for 2-byte samples.
-    dtype = np.int8 if width == 1 else np.int16
+    if width == 1:
+        dtype = np.int8
+    elif width == 2:
+        dtype = np.int16
+    else:
+        sys.stderr.write("error: only 8-bit and 16-bit signed samples are supported\n")
+        return 1
     
     # Hann window function coefficients.
     hann = 0.5 - 0.5 * np.cos(2.0 * np.pi * (np.arange(window_size)) / window_size)
