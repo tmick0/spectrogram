@@ -14,6 +14,8 @@ except:
             pass
         def update(self, x):
             pass
+        def finish(self):
+            pass
 
 def main(input_file=None, window_size="1024"):
 
