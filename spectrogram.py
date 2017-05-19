@@ -82,13 +82,19 @@ def main(input_file=None, window_size="1024"):
         X.extend(x)
         
         # Perform the FFT.
-        y = np.fft.fft(X * hann)
+        y = np.fft.rfft(X * hann)
         
         # Only data up to window_size/2 is useful; the rest is past the Nyquist cutoff.
         y = y[:window_size/2]
         
-        # Normalize the data by converting to dB.
-        y = (np.log10(np.power(np.absolute(y), 2).clip(1)) * 10)
+        # Normalize by obtaining magnitude, multiplying by 2 (since we discarded half the FFT) and dividing by the window size.
+        y = np.absolute(y) * 2.0 / np.sum(hann)
+        
+        # Scale according to reference level, which depends on the sample width.
+        y = y / np.power(2.0, (8*width - 1))
+        
+        # Convert to dB.
+        y = (20.0 * np.log10(y)).clip(-120)
         
         # Add this DFT frame to the output, update the progress bar, and truncate the window.
         Y.append(y)
@@ -110,13 +116,9 @@ def main(input_file=None, window_size="1024"):
     # By default, numpy will arrange the matrix by rows, so we need to transpose it.
     Y = np.array(Y).transpose()
     
-    # Scale dB by maximum value.
-    m = np.amax(Y)
-    Y = Y - m
-    
     # Plot the spectrogram.
     ax = plt.subplot(111)
-    plt.pcolormesh(t, f, Y)
+    plt.pcolormesh(t, f, Y, vmin=-120, vmax=0)
     
     # Use log scale above 100 Hz, linear below.
     plt.yscale('symlog', linthreshy=100, linscaley=0.25)
