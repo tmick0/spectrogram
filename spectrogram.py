@@ -35,35 +35,48 @@ def main(input_file=None, window_size="1024"):
     # Use an 8-bit integer for single-byte samples, 16-bit integer for 2-byte samples.
     dtype = np.int8 if width == 1 else np.int16
     
+    # Hann window function coefficients.
+    hann = 0.5 - 0.5 * np.cos(2.0 * np.pi * (np.arange(window_size)) / window_size)
+    
+    # Hann window must have 4x overlap for good results.
+    overlap = 4
+    
     # Y will hold the DFT of each window. We use acc and bar for displaying progress.
     Y = []
     acc = 0
-    bar = ProgressBar(max_value=frame)
+    bar = ProgressBar(max_value=frame*overlap)
+    
+    # X will hold residual window content for overlapping.
+    X = []
     
     # Process each window of audio.
     while True:
         
-        try:
-            x = w.readframes(window_size)
-        except:
-            break
-            
+        # If this is the first read, load an entire window, otherwise just 1/overlap of a window.
+        read_size = window_size if len(X) == 0 else window_size / overlap
+        
         # Load raw audio data into a numpy array.
+        x = w.readframes(read_size)
         x = np.fromstring(x, dtype=dtype)
         
         # If the window read was short, end.
-        if len(x) != window_size * chans:
+        if len(x) != read_size * chans:
             break
         
         # Reshape our array into an N*c matrix in order to separate the channels.
-        x = np.reshape(x, (window_size, chans))
+        x = np.reshape(x, (read_size, chans))
 
         # Average the channels if the audio is stereo.
         if chans > 1:
             x = (x[:,0] + x[:,1]) / 2
+        else:
+            x = x[:,0]
+        
+        # Append these frames to the window.
+        X.extend(x)
         
         # Perform the FFT.
-        y = np.fft.fft(x)
+        y = np.fft.fft(X * hann)
         
         # Only data up to window_size/2 is useful; the rest is past the Nyquist cutoff.
         y = y[:window_size/2]
@@ -71,17 +84,18 @@ def main(input_file=None, window_size="1024"):
         # Normalize the data by converting to dB.
         y = (np.log10(np.power(np.absolute(y), 2).clip(1)) * 10)
         
-        # Add this DFT frame to the output and update the progress bar.
+        # Add this DFT frame to the output, update the progress bar, and truncate the window.
         Y.append(y)
         acc += window_size
         bar.update(acc)
+        X = X[window_size / overlap:]
         
     # Inform progress bar that the computation is complete.
     bar.finish()
 
     # Time domain: We have len(Y) windows, so convert to seconds by multiplying
-    # by window size and dividing by sample rate.
-    t = np.arange(0, len(Y), dtype=np.float) * window_size / sample_freq
+    # by window size, dividing by sample rate, and dividing by the overlap rate.
+    t = np.arange(0, len(Y), dtype=np.float) * window_size / sample_freq / overlap
     
     # Frequency domain: There are window_size/2 frequencies represented, and we scale
     # by dividing by window size and multiplying by sample frequency.
