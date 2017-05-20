@@ -17,13 +17,15 @@ except:
         def finish(self):
             pass
 
-def main(input_file=None, window_size="1024"):
+def main(input_file=None, window_size="1024", scale="log"):
 
     # Process command-line args.
     if input_file is None:
-        sys.stderr.write("usage: python %s <input_file.wav> [window_size=1024]\n" % sys.argv[0])
+        sys.stderr.write("usage: python %s <input_file.wav> [window_size=int, default 1024] [scale=log|linear, default log]\n" % sys.argv[0])
         return 1
     window_size = int(window_size)
+    if not scale in ['log', 'linear']:
+        sys.stderr.write("error: '%s' is not a valid scale, choose 'log' or 'linear'.\n" % scale)
 
     # Open wave file and load frame rate, number of channels, sample width, and number of frames.
     w = wave.open(input_file, 'r')
@@ -131,8 +133,9 @@ def main(input_file=None, window_size="1024"):
     plt.pcolormesh(t, f, Y, vmin=-120, vmax=0)
     
     # Use log scale above 100 Hz, linear below.
-    plt.yscale('symlog', linthreshy=100, linscaley=0.25)
-    ax.yaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    if scale == 'log':
+        plt.yscale('symlog', linthreshy=100, linscaley=0.25)
+        ax.yaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
     
     # Set x/y limits by using the maximums from the time/frequency arrays.
     plt.xlim(0, t[-1])
