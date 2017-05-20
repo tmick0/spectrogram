@@ -41,6 +41,16 @@ def main(input_file=None, window_size="1024"):
         sys.stderr.write("error: only 8-bit and 16-bit signed samples are supported\n")
         return 1
     
+    # Catch case where there are more than 2 channels.
+    if chans > 2:
+        sys.stderr.write("error: only mono and stereo tracks are supported\n")
+        return 1
+    
+    # Catch case where there is less than one window of audio.
+    if frame < window_size:
+        sys.stderr.write("error: audio file is shorter than configured window size\n")
+        return 1
+    
     # Hann window function coefficients.
     hann = 0.5 - 0.5 * np.cos(2.0 * np.pi * (np.arange(window_size)) / window_size)
     
