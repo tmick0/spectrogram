@@ -59,7 +59,7 @@ def main(input_file=None, window_size="1024"):
     while True:
         
         # If this is the first read, load an entire window, otherwise just 1/overlap of a window.
-        read_size = window_size if len(X) == 0 else window_size / overlap
+        read_size = window_size if len(X) == 0 else window_size // overlap
         
         # Load raw audio data into a numpy array.
         x = w.readframes(read_size)
@@ -85,7 +85,7 @@ def main(input_file=None, window_size="1024"):
         y = np.fft.rfft(X * hann)
         
         # Only data up to window_size/2 is useful; the rest is past the Nyquist cutoff.
-        y = y[:window_size/2]
+        y = y[:window_size//2]
         
         # Normalize by obtaining magnitude, multiplying by 2 (since we discarded half the FFT) and dividing by the window size.
         y = np.absolute(y) * 2.0 / np.sum(hann)
@@ -100,7 +100,7 @@ def main(input_file=None, window_size="1024"):
         Y.append(y)
         acc += window_size
         bar.update(acc)
-        X = X[window_size / overlap:]
+        X = X[window_size // overlap:]
         
     # Inform progress bar that the computation is complete.
     bar.finish()
