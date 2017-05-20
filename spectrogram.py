@@ -39,7 +39,7 @@ def main(input_file=None, window_size="1024", scale="log"):
     
     # Use an 8-bit integer for single-byte samples, 16-bit integer for 2-byte samples.
     if width == 1:
-        dtype = np.int8
+        dtype = np.uint8
     elif width == 2:
         dtype = np.int16
     else:
@@ -83,6 +83,10 @@ def main(input_file=None, window_size="1024", scale="log"):
         # If the window read was short, end.
         if len(x) != read_size * chans:
             break
+        
+        # If audio was 8-bit unsigned, cast it to signed and shift it down.
+        if width == 1:
+            x = (x.astype(np.int16) -  np.power(2, 7)).astype(np.int8)
         
         # Reshape our array into an N*c matrix in order to separate the channels.
         x = np.reshape(x, (read_size, chans))
