@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker
 import numpy as np
+import warnings
 import sys
 
 from wavwrapper import wavfile, monowrapper
@@ -86,7 +87,12 @@ def main(input_file=None, window_size="1024", scale="log"):
     
     # Use log scale above 100 Hz, linear below.
     if scale == 'log':
-        plt.yscale('symlog', linthreshy=100, linscaley=0.25)
+        yscale = 0.25
+        # Mitigation for issue 2 (https://github.com/le1ca/spectrogram/issues/2)
+        if matplotlib.__version__[0:3] == '1.3':
+            yscale = 1
+            warnings.warn('You are using matplotlib 1.3.* (and not >= 1.4.0). Therefore linscaley must equal 1, not 0.25')
+        plt.yscale('symlog', linthreshy=100, linscaley=yscale)
         ax.yaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
     
     # Set x/y limits by using the maximums from the time/frequency arrays.
