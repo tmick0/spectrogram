@@ -9,7 +9,7 @@ class monowrapper (object):
     def read(self, num_frames):
         data = self._stream.read(num_frames)
         if self._nchans > 1:
-            data = (data[:,0] + data[:,1]) / 2
+            data = ((data.astype(np.int32)[:,0] + data.astype(np.int32)[:,1]) / 2).astype(data.dtype)
         else:
             data = data[:,0]
         return data
