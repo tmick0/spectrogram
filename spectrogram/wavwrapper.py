@@ -55,5 +55,5 @@ class wavfile (object):
         elif sampwidth == 2:
             dtype = np.int16
         else:
-            raise ValueError("Sample width of %d bytes not supported" % sampwidth)
+            raise ValueError("Sample width of {:d} bytes not supported".format(sampwidth))
         return dtype
